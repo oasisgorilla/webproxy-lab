@@ -10,7 +10,7 @@ all: tiny cgi
 tiny: tiny.c csapp.o
 	$(CC) $(CFLAGS) -o tiny tiny.c csapp.o $(LIB)
 
-csapp.o: csapp.c
+csapp.o: csapp.c csapp.h
 	$(CC) $(CFLAGS) -c csapp.c
 
 cgi:
