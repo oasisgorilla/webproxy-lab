@@ -13,9 +13,9 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize, char *method);
+void serve_static(int fd, char *filename, int filesize, char *method, char *version);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs, char *method);
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method, char *version);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 void echo(int connfd);
 
@@ -80,7 +80,7 @@ void doit(int fd)
       return;
     }
     // response static file
-    serve_static(fd, filename, sbuf.st_size, method);
+    serve_static(fd, filename, sbuf.st_size, method, version);
   }
   // request file이 dynamic contents이면 실행
   else {
@@ -91,7 +91,7 @@ void doit(int fd)
       return;
   }
   // response dynamic files
-    serve_dynamic(fd, filename, cgiargs, method);
+    serve_dynamic(fd, filename, cgiargs, method, version);
   }
 }
 
@@ -168,14 +168,14 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 }
 
 // HEAD method 처리를 위한 인자 추가
-void serve_static(int fd, char *filename, int filesize, char *method)
+void serve_static(int fd, char *filename, int filesize, char *method, char *version)
 {
   int srcfd;
   char *srcp, filetype[MAXLINE], buf[MAXBUF];
 
   /* Send response headers to client */
   get_filetype(filename, filetype);
-  sprintf(buf, "HTTP/1.0 200 OK\r\n");
+  sprintf(buf, "HTTP/%s 200 OK\r\n", version);
   sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);
   sprintf(buf, "%sConnection: close\r\n", buf);
   sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
@@ -216,23 +216,23 @@ void get_filetype(char *filename, char *filetype)
     strcpy(filetype, "text/plain");
 }
 
-void serve_dynamic(int fd, char *filename, char *cgiargs, char *method)
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method, char *version)
 {
   char buf[MAXLINE], *emptylist[] = { NULL };
 
   /* Return first part of HTTP response */
-  sprintf(buf, "HTTP/1.0 200 OK\r\n");
+  sprintf(buf, "HTTP/%s 200 OK\r\n", version);
   Rio_writen(fd, buf, strlen(buf));
   sprintf(buf, "Server: Tiny Web Server\r\n");
   Rio_writen(fd, buf, strlen(buf));
 
   if (Fork() == 0) { /* Child */
-  /* Real server would set all CGI vars here */
-  setenv("QUERY_STRING", cgiargs, 1);
-  // method를 cgi-bin/adder.c에 넘겨주기 위해 환경변수 set
-  setenv("REQUEST_METHOD", method, 1);
-  Dup2(fd, STDOUT_FILENO); /* Redirect stdout to client */
-  Execve(filename, emptylist, environ); /* Run CGI program */
+    /* Real server would set all CGI vars here */
+    setenv("QUERY_STRING", cgiargs, 1);
+    // method를 cgi-bin/adder.c에 넘겨주기 위해 환경변수 set
+    setenv("REQUEST_METHOD", method, 1);
+    Dup2(fd, STDOUT_FILENO); /* Redirect stdout to client */
+    Execve(filename, emptylist, environ); /* Run CGI program */
   }
   Wait(NULL); /* Parent waits for and reaps child */
 }
