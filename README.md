@@ -1,3 +1,7 @@
+# 과제 결과 사진
+![tiny-server과제1사진](https://github.com/user-attachments/assets/073d47f7-5e02-443c-aef3-6796dbf3d0bf)
+![tiny-server과제2사진](https://github.com/user-attachments/assets/5aae0cf0-545b-4ad1-b023-2d4f35562d8b)
+### 과제1, 2 모두 완료
 ####################################################################
 # CS:APP Proxy Lab
 #
